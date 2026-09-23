@@ -1,0 +1,6 @@
+{
+  "name": "Meesho Reseller Growth & Alert Intelligence Pipeline",
+  "description": "Integrated data pipeline: SQL business queries to Python guardrails, deterministic AI narrative generation, agent runner, and human approval workflow.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
