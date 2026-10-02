@@ -1,29 +1,23 @@
 """
-Meesho Reseller Growth & Alert Intelligence Agent - Mock Agent Runner
-======================================================================
+Meesho Reseller Growth & Alert Intelligence Agent - Agent Runner & Execution Engine
+===================================================================================
 File: part4_agent/mock_agent_runner.py
 
-This module executes the guarded 8-step agentic workflow:
-  1. Validate incoming feed using Part 2's validate_feed
-  2. Hard stop if feed is invalid, surfacing line errors
-  3. Calculate MoM growth using Part 2's mom_growth (unmodified import)
-  4. Apply flag rule using Part 2's is_flagged (unmodified import)
-  5. Sort flagged categories by absolute MoM percentage descending
-  6. Draft at most the top 3 flagged categories using Part 3 template
-  7. Suppress additional flagged categories beyond the top-3 cap
-  8. Separately record exact-boundary escalations (abs(mom_pct) == 8.0)
-  9. Emit structured JSON adhering to the required schema
+Orchestrates the category performance monitoring workflow:
+  1. Validates input feeds with fail-fast schema checks (validate_feed).
+  2. Applies tri-state threshold evaluation (is_flagged).
+  3. Ranks volatile categories by absolute growth percentage.
+  4. Enforces an anti-fatigue policy (caps drafted notifications to the top 3).
+  5. Formats structured JSON payloads held for human review.
 
-Required top-level JSON keys:
-  - run_month
+Schema:
+  - run_month (str)
   - validation_status ("valid" | "invalid")
   - validation_errors (list[str])
   - flagged_categories (list[dict])
   - suppressed_categories (list[str])
   - escalated_categories (list[str])
   - action_taken ("drafted_and_held_for_approval" | "hard_stop")
-
-Zero external APIs, zero emails, zero network calls.
 """
 
 import os
@@ -37,9 +31,10 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-# Critical requirement: import Part 2 and Part 3 functions unmodified
+# Core engine and narrative formatters
 from part2_engine.growth_engine import validate_feed, mom_growth, is_flagged
 from part3_narrative.masking import generate_narrative_block
+
 
 
 def _load_category_data(csv_path: str) -> Dict[str, Dict[str, Any]]:
@@ -75,12 +70,10 @@ def run(month: str, previous_month_csv: str, current_month_csv: str) -> Dict[str
     Returns:
       Structured JSON object conforming to the specification.
     """
-    # -------------------------------------------------------------------------
-    # Subtask 1 & 2: Validate Feed & Hard Stop if Invalid
-    # -------------------------------------------------------------------------
+    # 1. Validate Input Feeds (Fail-fast guardrail before metric computation)
     is_valid, errors = validate_feed(current_month_csv)
     if not is_valid:
-        # Immediate Hard Stop: no calculations attempted
+        # Immediate hard stop on invalid feed
         return {
             "run_month": month,
             "validation_status": "invalid",
@@ -91,7 +84,7 @@ def run(month: str, previous_month_csv: str, current_month_csv: str) -> Dict[str
             "action_taken": "hard_stop",
         }
 
-    # Also validate baseline feed if present
+    # Validate baseline feed
     is_prev_valid, prev_errors = validate_feed(previous_month_csv)
     if not is_prev_valid:
         return {
@@ -104,16 +97,14 @@ def run(month: str, previous_month_csv: str, current_month_csv: str) -> Dict[str
             "action_taken": "hard_stop",
         }
 
-    # -------------------------------------------------------------------------
-    # Subtask 3 & 4: Load Feeds, Compute MoM & Apply Tri-State Flag Rule
-    # -------------------------------------------------------------------------
+    # 2. Ingest Category Revenue & Evaluate Threshold Rules
     prev_data = _load_category_data(previous_month_csv)
     curr_data = _load_category_data(current_month_csv)
 
     flagged_candidates: List[Dict[str, Any]] = []
     escalated_categories: List[str] = []
 
-    # Get prev_month name from baseline data if available
+    # Extract previous month label if present
     prev_month_name = "Previous Month"
     for item in prev_data.values():
         if item.get("month"):
@@ -126,10 +117,10 @@ def run(month: str, previous_month_csv: str, current_month_csv: str) -> Dict[str
             prev_rev = prev_info["revenue"]
             curr_rev = curr_info["revenue"]
 
-            # Subtask 3: compute MoM growth via Part 2 function
+            # Compute Month-over-Month growth
             pct = mom_growth(prev_rev, curr_rev)
 
-            # Subtask 4: apply tri-state flag rule via Part 2 function
+            # Evaluate against 8.00% operational boundary
             status = is_flagged(pct, threshold=8.0)
 
             if status == "flagged":
@@ -143,24 +134,19 @@ def run(month: str, previous_month_csv: str, current_month_csv: str) -> Dict[str
                     "prev_n_orders": prev_info["n_orders"],
                 })
             elif status == "escalate_exact_boundary":
-                # Subtask 8: separately record exact-boundary escalations
+                # Route exact 8.00% boundary cases to analyst escalation queue
                 escalated_categories.append(cat)
-            # "not_flagged" items (e.g. Beauty in June) are intentionally ignored
+            # Normal variance categories (< 8.0%) remain unflagged
 
-    # -------------------------------------------------------------------------
-    # Subtask 5: Sort flagged categories by absolute MoM percentage descending
-    # -------------------------------------------------------------------------
+    # 3. Sort flagged categories by absolute volatility magnitude descending
     flagged_candidates.sort(key=lambda x: x["abs_mom_pct"], reverse=True)
 
-    # -------------------------------------------------------------------------
-    # Subtask 6 & 7: Draft at most top 3, suppress additional flagged categories
-    # -------------------------------------------------------------------------
+    # 4. Anti-fatigue notification policy: draft top 3, suppress remaining
     top_3_candidates = flagged_candidates[:3]
     suppressed_candidates = flagged_candidates[3:]
 
     flagged_categories: List[Dict[str, Any]] = []
     for item in top_3_candidates:
-        # Generate drafted message using Part 3 template
         msg = generate_narrative_block(
             category=item["category"],
             month=month,
@@ -182,9 +168,7 @@ def run(month: str, previous_month_csv: str, current_month_csv: str) -> Dict[str
 
     suppressed_categories = [item["category"] for item in suppressed_candidates]
 
-    # -------------------------------------------------------------------------
-    # Subtask 9: Emit structured JSON adhering to the required schema
-    # -------------------------------------------------------------------------
+    # 5. Build structured payload held for human category manager approval
     output_payload: Dict[str, Any] = {
         "run_month": month,
         "validation_status": "valid",
@@ -193,14 +177,24 @@ def run(month: str, previous_month_csv: str, current_month_csv: str) -> Dict[str
         "suppressed_categories": suppressed_categories,
         "escalated_categories": escalated_categories,
         "action_taken": "drafted_and_held_for_approval",
+
     }
 
     return output_payload
 
 
 if __name__ == "__main__":
-    # Internal validation execution
     import tempfile
+
+    # Flexible CLI invocation:
+    # Usage: python3 part4_agent/mock_agent_runner.py [month] [prev_csv] [curr_csv]
+    if len(sys.argv) == 4:
+        run_m = sys.argv[1]
+        p_csv = sys.argv[2]
+        c_csv = sys.argv[3]
+        result = run(run_m, p_csv, c_csv)
+        print(json.dumps(result, indent=2))
+        sys.exit(0)
 
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     full_csv = os.path.join(base_dir, "part1_sql", "output", "monthly_category_revenue.csv")
@@ -250,3 +244,4 @@ if __name__ == "__main__":
         os.remove(april_csv)
         os.remove(may_csv)
         os.remove(june_csv)
+
