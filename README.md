@@ -130,6 +130,7 @@ To deliver a fast, convincing live terminal demo, execute these three commands:
 │   └── index.css                             # Styling & design system tokens
 │
 ├── index.html                                # HTML entry point with metadata and viewports
+├── package-lock.json                         # Locks the exact versions of installed packages
 ├── package.json                              # Project manifest, scripts & dependencies
 ├── vite.config.ts                            # Vite build & development server configuration
 └── tsconfig.json                             # TypeScript compiler options
