@@ -324,7 +324,7 @@ Execute the pipeline in sequential order. Each step below displays the exact ter
 ### Step 1: Generate Seeded Dataset
 **Terminal Input:**
 ```bash
-python3 data/generate_dataset.py
+python data/generate_dataset.py
 ```
 **Terminal Output:**
 ```text
@@ -338,7 +338,7 @@ Seeded dataset generated successfully:
 ### Step 2: Execute SQL Analytical Queries & Generate Monthly Revenue Feed
 **Terminal Input:**
 ```bash
-python3 -c '
+python -c '
 import sqlite3, csv
 conn = sqlite3.connect("data/meesho_reseller.db")
 cur = conn.cursor()
@@ -363,7 +363,7 @@ Generated part1_sql/output/monthly_category_revenue.csv with 15 rows.
 ### Step 3: Run Growth Engine Unit Tests
 **Terminal Input:**
 ```bash
-python3 -m unittest part2_engine/test_growth_engine.py -v
+python -m unittest part2_engine/test_growth_engine.py -v
 ```
 **Terminal Output:**
 ```text
@@ -384,7 +384,7 @@ OK
 ### Step 4: Verify Masking & Redaction Assertions
 **Terminal Input:**
 ```bash
-python3 part3_narrative/masking.py
+python part3_narrative/masking.py
 ```
 **Terminal Output:**
 ```text
@@ -397,7 +397,7 @@ python3 part3_narrative/masking.py
 #### Mode A: Automated Batch (May, June, Corrupted Feed)
 **Terminal Input:**
 ```bash
-python3 part4_agent/mock_agent_runner.py
+python part4_agent/mock_agent_runner.py
 ```
 **Terminal Output (Abbreviated Preview):**
 ```text
@@ -497,7 +497,7 @@ python3 part4_agent/mock_agent_runner.py
 #### Mode B: Command-Line Arguments with Custom Feeds
 **Terminal Input:**
 ```bash
-python3 part4_agent/mock_agent_runner.py July baseline.csv part2_engine/fixtures/corrupted_feed.csv
+python part4_agent/mock_agent_runner.py July baseline.csv part2_engine/fixtures/corrupted_feed.csv
 ```
 **Terminal Output:**
 ```json
@@ -525,7 +525,7 @@ Each module contains self-contained unit tests and assertions using Python's sta
 ### 1. Part 2 Growth Engine & Fixture Unit Tests
 **Terminal Input:**
 ```bash
-python3 -m unittest part2_engine/test_growth_engine.py -v
+python -m unittest part2_engine/test_growth_engine.py -v
 ```
 **Terminal Output:**
 ```text
@@ -546,7 +546,7 @@ OK
 ### 2. Part 3 PII Redaction & Leakage Interception Tests
 **Terminal Input:**
 ```bash
-python3 part3_narrative/masking.py
+python part3_narrative/masking.py
 ```
 **Terminal Output:**
 ```text
@@ -558,7 +558,7 @@ python3 part3_narrative/masking.py
 ### 3. Part 4 Autonomous Agent Scenarios (May, June, Corrupted Feed)
 **Terminal Input:**
 ```bash
-python3 part4_agent/mock_agent_runner.py
+python part4_agent/mock_agent_runner.py
 ```
 *Executes all monthly scenarios with full JSON payload generation, top-3 anti-flooding caps, suppression logging, and hard-stop guardrails.*
 
