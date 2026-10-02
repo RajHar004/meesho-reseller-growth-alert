@@ -56,11 +56,11 @@ When walking an interviewer or stakeholder through the codebase, explain the fiv
 
 To deliver a fast, convincing live terminal demo, execute these three commands:
 
-1. **Show Complete End-to-End Health in 2 Seconds:**
+1. **Run Mathematical Guardrail Unit Tests:**
    ```bash
-   python3 run_e2e_verification.py
+   python3 -m unittest part2_engine/test_growth_engine.py -v
    ```
-   * *Point to the terminal:* Show that all 15 verification steps pass with zero discrepancies.
+   * *Point to the terminal:* Show all 7 unit tests passing (boundary conditions, corrupted feed detection, tri-state rules).
 
 2. **Demonstrate the Agent & Prioritized Drafts:**
    ```bash
@@ -68,7 +68,7 @@ To deliver a fast, convincing live terminal demo, execute these three commands:
    ```
    * *Point to the terminal:* Show the May JSON (top 3 drafted, 2 suppressed), the June JSON (4 flagged, 1 not flagged, 3 drafted, 1 suppressed), and the Corrupted Feed hard-stop.
 
-3. **Show Custom CLI Flexibility:**
+3. **Show Custom File-Feed CLI Flexibility:**
    ```bash
    python3 part4_agent/mock_agent_runner.py July baseline.csv part2_engine/fixtures/corrupted_feed.csv
    ```
@@ -93,45 +93,73 @@ To deliver a fast, convincing live terminal demo, execute these three commands:
 
 ```text
 .
-├── README.md                                 # Comprehensive pipeline documentation
-├── run_e2e_verification.py                   # Automated 15-step end-to-end verification script
-├── data/
+├── README.md                                 # Comprehensive pipeline & architecture documentation
+├── .gitignore                                # Git ignore configuration (caches, build, node_modules)
+├── .env.example                              # Environment variable reference
+│
+├── data/                                     # Data Layer
 │   ├── generate_dataset.py                   # Seeded deterministic dataset generator (PRNG seed 42)
 │   ├── resellers.csv                         # Reseller directory (24 seeded resellers)
 │   ├── orders.csv                            # Order transactions (900 orders across Apr, May, Jun 2026)
 │   └── meesho_reseller.db                    # Relational SQLite database with resellers & orders tables
-├── part1_sql/
+│
+├── part1_sql/                                # Part 1: Analytical SQL
 │   ├── queries.sql                           # 5 analytical business SQL queries
 │   └── output/
 │       └── monthly_category_revenue.csv      # 15-row ground truth category revenue feed
-├── part2_engine/
+│
+├── part2_engine/                             # Part 2: Growth Engine & Guardrails
 │   ├── growth_engine.py                      # Public engine: mom_growth, is_flagged, validate_feed
 │   ├── test_growth_engine.py                 # Unit test suite verifying math, flags & fixtures
 │   └── fixtures/
 │       ├── corrupted_feed.csv                # Negative fixture containing 3 seeded line errors
 │       └── monthly_category_revenue.csv      # Clean 15-row reference copy
-├── part3_narrative/
+│
+├── part3_narrative/                          # Part 3: Narrative Layer & Masking
 │   ├── prompt_pack.md                        # Production prompt engineering specification (4 sections)
 │   ├── narrative_report.md                   # Worked May & June narratives, self-evaluations & chart choices
 │   └── masking.py                            # PII redaction (alias_for) & leak detection utilities
-└── part4_agent/
-    ├── agent_spec.md                         # 5-component agent architecture & guardrail specification
-    └── mock_agent_runner.py                  # Guarded agent runner producing standardized JSON payloads
+│
+├── part4_agent/                              # Part 4: Autonomous Agent
+│   ├── agent_spec.md                         # 5-component agent architecture & guardrail specification
+│   └── mock_agent_runner.py                  # Guarded agent runner producing standardized JSON payloads
+│
+├── src/                                      # Full-Stack Operational Dashboard
+│   ├── App.tsx                               # React interactive category manager control dashboard
+│   ├── main.tsx                              # Application entry point & React root mount
+│   └── index.css                             # Styling & design system tokens
+│
+├── index.html                                # HTML entry point with metadata and viewports
+├── package.json                              # Project manifest, scripts & dependencies
+├── vite.config.ts                            # Vite build & development server configuration
+└── tsconfig.json                             # TypeScript compiler options
 ```
 
 ---
 
-## Requirements
+## Requirements & Dual-Mode Execution
 
-### Runtime & System Requirements
-* **Python:** Standard Python 3.10+ (tested on Python 3.11 / 3.12).
-* **Dependencies:** Zero third-party Python packages required. Uses standard library modules exclusively:
-  * `sqlite3` for local relational queries.
-  * `csv` for file intake, parsing, and serialization.
-  * `json` for agent structured payload generation.
-  * `unittest` for automated test execution.
-  * `random` for seeded PRNG dataset creation.
-* **Operating System:** Linux, macOS, or Windows (cross-platform path resolution via `os.path`).
+This system is architected as a **two-tier solution**: a zero-dependency core analytical backend, and a modern operational dashboard.
+
+### 1. Core Analytics Backend (Python)
+* **Python Runtime:** Python 3.10+ (tested on Python 3.11 / 3.12).
+* **Dependencies:** **Zero external pip packages.** Built strictly with Python standard library modules:
+  * `sqlite3` for local relational data store and business analytics.
+  * `csv` for file ingestion, validation, and serialization.
+  * `json` for standardized agent output generation.
+  * `unittest` for automated test assertions.
+  * `random` for deterministic PRNG dataset synthesis.
+* **Execution:** All backend scripts (`data/`, `part1_sql/`, `part2_engine/`, `part3_narrative/`, `part4_agent/`) run 100% offline via CLI.
+
+### 2. Operational Control Dashboard (React + TypeScript)
+* **Frontend Runtime:** Node.js 18+ & npm.
+* **Tech Stack:** React 19, TypeScript, Vite, Tailwind CSS, Lucide icons.
+* **Purpose:** Provides human category managers with a visual user interface to inspect monthly category performance, review prioritized alert drafts, examine PII masking, and exercise final approval authority.
+* **Commands:**
+  * Install dependencies: `npm install`
+  * Launch interactive dev server: `npm run dev`
+  * Type check codebase: `npm run lint`
+  * Production build: `npm run build`
 
 ---
 
@@ -490,68 +518,49 @@ python3 part4_agent/mock_agent_runner.py July baseline.csv part2_engine/fixtures
 
 ---
 
-## Testing & Complete Verification
+## Testing & Modular Verification
 
-To run the automated 15-step end-to-end verification suite:
+Each module contains self-contained unit tests and assertions using Python's standard `unittest` framework:
 
+### 1. Part 2 Growth Engine & Fixture Unit Tests
 **Terminal Input:**
 ```bash
-python3 run_e2e_verification.py
+python3 -m unittest part2_engine/test_growth_engine.py -v
 ```
-
 **Terminal Output:**
 ```text
-[PASS] Step 1: Generate the seeded dataset - Wrote 24 resellers and 900 orders. Zero-order reseller: RS024
-[PASS] Step 2: Verify 24 resellers and 900 orders - resellers.csv: 24, orders.csv: 900, db_resellers: 24, db_orders: 900
-[PASS] Step 3: Run all Part 1 SQL queries - Q1 rows: 15, Q2 regions: 4, Q3 top: 5, Q4: ('RS024', 1, 0), Q5 AOV: 1267.69
-[PASS] Step 4: Verify monthly_category_revenue.csv - 15 rows matched ground truth exactly
-[PASS] Step 5: Run all Part 2 tests - unittest exited code 0
-[PASS] Step 6: Test the corrupted feed - Returned 3 ordered errors exactly as required
-[PASS] Step 7: Verify May MoM values - All 5 categories flagged (77.1%, -23.6%, -23.48%, -9.25%, -12.75%)
-[PASS] Step 8: Verify June MoM values - 4 flagged, 1 not_flagged (Beauty at 5.67%)
-[PASS] Step 9: Verify Part 3 narrative requirements - Prompt pack 4 sections, Context->Insight->Implication, chart justifications verified
-[PASS] Step 10: Test masking positive and negative cases - alias_for verified, positive passed, negative leak caught
-[PASS] Step 11: Run the Part 4 May scenario - Drafted 3 (Ethnic, Western, Kids), Suppressed 2 (Beauty, Home)
-[PASS] Step 12: Run the Part 4 June scenario - Drafted 3 (Ethnic, Home, Kids), Suppressed Western, Beauty omitted
-[PASS] Step 13: Run the Part 4 corrupted-feed scenario - Hard stop, 3 ordered errors, empty drafts
-[PASS] Step 14: Verify the exact Part 4 JSON schema - Exact 7 keys and valid action_taken 'drafted_and_held_for_approval'
---- Running Complete Pipeline Orchestration ---
-[PASS] Step 1: Generate the seeded dataset - Wrote 24 resellers and 900 orders. Zero-order reseller: RS024
-[PASS] Step 2: Verify 24 resellers and 900 orders - resellers.csv: 24, orders.csv: 900, db_resellers: 24, db_orders: 900
-[PASS] Step 3: Run all Part 1 SQL queries - Q1 rows: 15, Q2 regions: 4, Q3 top: 5, Q4: ('RS024', 1, 0), Q5 AOV: 1267.69
-[PASS] Step 4: Verify monthly_category_revenue.csv - 15 rows matched ground truth exactly
-[PASS] Step 5: Run all Part 2 tests - unittest exited code 0
-[PASS] Step 6: Test the corrupted feed - Returned 3 ordered errors exactly as required
-[PASS] Step 7: Verify May MoM values - All 5 categories flagged (77.1%, -23.6%, -23.48%, -9.25%, -12.75%)
-[PASS] Step 8: Verify June MoM values - 4 flagged, 1 not_flagged (Beauty at 5.67%)
-[PASS] Step 9: Verify Part 3 narrative requirements - Prompt pack 4 sections, Context->Insight->Implication, chart justifications verified
-[PASS] Step 10: Test masking positive and negative cases - alias_for verified, positive passed, negative leak caught
-[PASS] Step 11: Run the Part 4 May scenario - Drafted 3 (Ethnic, Western, Kids), Suppressed 2 (Beauty, Home)
-[PASS] Step 12: Run the Part 4 June scenario - Drafted 3 (Ethnic, Home, Kids), Suppressed Western, Beauty omitted
-[PASS] Step 13: Run the Part 4 corrupted-feed scenario - Hard stop, 3 ordered errors, empty drafts
-[PASS] Step 14: Verify the exact Part 4 JSON schema - Exact 7 keys and valid action_taken 'drafted_and_held_for_approval'
-[PASS] Step 15: Run the complete pipeline from start to finish - End-to-end orchestration successful without error
-=======================================================
-          END-TO-END VERIFICATION SUMMARY             
-=======================================================
-Step 01 | [PASS] Generate the seeded dataset                      | Wrote 24 resellers and 900 orders. Zero-order reseller: RS024
-Step 02 | [PASS] Verify 24 resellers and 900 orders               | resellers.csv: 24, orders.csv: 900, db_resellers: 24, db_orders: 900
-Step 03 | [PASS] Run all Part 1 SQL queries                       | Q1 rows: 15, Q2 regions: 4, Q3 top: 5, Q4: ('RS024', 1, 0), Q5 AOV: 1267.69
-Step 04 | [PASS] Verify monthly_category_revenue.csv              | 15 rows matched ground truth exactly
-Step 05 | [PASS] Run all Part 2 tests                             | unittest exited code 0
-Step 06 | [PASS] Test the corrupted feed                          | Returned 3 ordered errors exactly as required
-Step 07 | [PASS] Verify May MoM values                            | All 5 categories flagged (77.1%, -23.6%, -23.48%, -9.25%, -12.75%)
-Step 08 | [PASS] Verify June MoM values                           | 4 flagged, 1 not_flagged (Beauty at 5.67%)
-Step 09 | [PASS] Verify Part 3 narrative requirements             | Prompt pack 4 sections, Context->Insight->Implication, chart justifications verified
-Step 10 | [PASS] Test masking positive and negative cases         | alias_for verified, positive passed, negative leak caught
-Step 11 | [PASS] Run the Part 4 May scenario                      | Drafted 3 (Ethnic, Western, Kids), Suppressed 2 (Beauty, Home)
-Step 12 | [PASS] Run the Part 4 June scenario                     | Drafted 3 (Ethnic, Home, Kids), Suppressed Western, Beauty omitted
-Step 13 | [PASS] Run the Part 4 corrupted-feed scenario           | Hard stop, 3 ordered errors, empty drafts
-Step 14 | [PASS] Verify the exact Part 4 JSON schema              | Exact 7 keys and valid action_taken 'drafted_and_held_for_approval'
-Step 15 | [PASS] Run the complete pipeline from start to finish   | End-to-end orchestration successful without error
-=======================================================
-ALL 15 REQUIREMENTS PASSED WITH ZERO DISCREPANCIES.
+test_boundary_escalation (part2_engine.test_growth_engine.TestGrowthEngine.test_boundary_escalation) ... ok
+test_corrupted_feed_order_and_content (part2_engine.test_growth_engine.TestGrowthEngine.test_corrupted_feed_order_and_content) ... ok
+test_is_flagged_tri_state (part2_engine.test_growth_engine.TestGrowthEngine.test_is_flagged_tri_state) ... ok
+test_june_acceptance_values (part2_engine.test_growth_engine.TestGrowthEngine.test_june_acceptance_values) ... ok
+test_may_acceptance_values (part2_engine.test_growth_engine.TestGrowthEngine.test_may_acceptance_values) ... ok
+test_mom_growth_calculation (part2_engine.test_growth_engine.TestGrowthEngine.test_mom_growth_calculation) ... ok
+test_validate_feed_valid (part2_engine.test_growth_engine.TestGrowthEngine.test_validate_feed_valid) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.008s
+
+OK
 ```
+
+### 2. Part 3 PII Redaction & Leakage Interception Tests
+**Terminal Input:**
+```bash
+python3 part3_narrative/masking.py
+```
+**Terminal Output:**
+```text
+[PASS] alias_for("RS019") == ALIAS-19
+[PASS] Positive test: Narrative with ALIAS-19 correctly passed leak check.
+[PASS] Negative test: Raw merchant name leak correctly detected and intercepted.
+```
+
+### 3. Part 4 Autonomous Agent Scenarios (May, June, Corrupted Feed)
+**Terminal Input:**
+```bash
+python3 part4_agent/mock_agent_runner.py
+```
+*Executes all monthly scenarios with full JSON payload generation, top-3 anti-flooding caps, suppression logging, and hard-stop guardrails.*
 
 
 ---
