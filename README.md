@@ -58,19 +58,19 @@ To deliver a fast, convincing live terminal demo, execute these three commands:
 
 1. **Run Mathematical Guardrail Unit Tests:**
    ```bash
-   python3 -m unittest part2_engine/test_growth_engine.py -v
+   python -m unittest part2_engine/test_growth_engine.py -v
    ```
    * *Point to the terminal:* Show all 7 unit tests passing (boundary conditions, corrupted feed detection, tri-state rules).
 
 2. **Demonstrate the Agent & Prioritized Drafts:**
    ```bash
-   python3 part4_agent/mock_agent_runner.py
+   python part4_agent/mock_agent_runner.py
    ```
    * *Point to the terminal:* Show the May JSON (top 3 drafted, 2 suppressed), the June JSON (4 flagged, 1 not flagged, 3 drafted, 1 suppressed), and the Corrupted Feed hard-stop.
 
 3. **Show Custom File-Feed CLI Flexibility:**
    ```bash
-   python3 part4_agent/mock_agent_runner.py July baseline.csv part2_engine/fixtures/corrupted_feed.csv
+   python part4_agent/mock_agent_runner.py July baseline.csv part2_engine/fixtures/corrupted_feed.csv
    ```
    * *Point to the terminal:* Demonstrate that passing invalid feeds produces an immediate `action_taken: "hard_stop"` with exact line error diagnostics before any growth calculation runs.
 
