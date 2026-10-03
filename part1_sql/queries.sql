@@ -23,6 +23,13 @@ GROUP BY
         WHEN 'June' THEN 3 
     END,
     month,
+    category
+ORDER BY
+    CASE month
+        WHEN 'April' THEN 1
+        WHEN 'May' THEN 2
+        WHEN 'June' THEN 3
+    END,
     category;
 
 -- ----------------------------------------------------------------------------

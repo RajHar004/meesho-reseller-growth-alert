@@ -11,6 +11,24 @@ A code-first, reproducible intelligence pipeline designed to monitor reseller pe
 
 ---
 
+## Reproduce the pipeline (zero API keys)
+
+From the repository root, run these commands in order with Python 3.10 or newer:
+
+```bash
+python data/generate_dataset.py
+python part1_sql/run_queries.py
+python -m unittest part2_engine/test_growth_engine.py -v
+python part3_narrative/masking.py
+python part4_agent/mock_agent_runner.py
+```
+
+The generator recreates both CSV datasets and the SQLite database. The SQL runner executes the queries in `part1_sql/queries.sql` and exports the monthly category feed used by Parts 2–4. The unit tests and masking checks run locally, and the mock agent prints the May, June, and corrupted-feed scenarios. The complete pipeline uses only Python's standard library: it runs offline with **zero API keys or external services configured**.
+
+Workflow mapping: **Part 1 → Part 2** mirrors “compute real numbers via SQL first, then hand off” to the guarded growth engine; **Part 3** turns verified metrics into grounded, privacy-masked narratives; **Part 4** mirrors an **Intake → Summary → Report Draft → Validate** reporting flow, with invalid feeds stopped early and valid drafts held for human review.
+
+---
+
 ## Overview
 
 Modern e-commerce category operations require timely, auditable insights into category revenue movement without succumbing to alert flooding or unverified AI hallucinations. The **Meesho Reseller Growth & Alert Intelligence Pipeline** delivers an enterprise operational architecture divided into five stages:
@@ -119,6 +137,7 @@ To deliver a fast, convincing live terminal demo, execute these three commands:
 │
 ├── part1_sql/                                # Part 1: Analytical SQL
 │   ├── queries.sql                           # 5 analytical business SQL queries
+│   ├── run_queries.py                         # Executes queries and exports the monthly feed
 │   └── output/
 │       └── monthly_category_revenue.csv      # 15-row ground truth category revenue feed
 │
@@ -157,7 +176,7 @@ To deliver a fast, convincing live terminal demo, execute these three commands:
 This system is architected as a **two-tier solution**: a zero-dependency core analytical backend, and a modern operational dashboard.
 
 ### 1. Core Analytics Backend (Python)
-* **Python Runtime:** Python 3.10+ (tested on Python 3.11 / 3.12).
+* **Python Runtime:** Python 3.10+ (verified with Python 3.13.14).
 * **Dependencies:** **Zero external pip packages.** Built strictly with Python standard library modules:
   * `sqlite3` for local relational data store and business analytics.
   * `csv` for file ingestion, validation, and serialization.
@@ -343,36 +362,17 @@ python data/generate_dataset.py
 ```
 **Terminal Output:**
 ```text
-Seeded dataset generated successfully:
-  - Resellers CSV: data/resellers.csv (24 rows)
-  - Orders CSV: data/orders.csv (900 rows)
-  - SQLite Database: data/meesho_reseller.db
-  - Verification: RS024 has 0 orders.
+Wrote 24 resellers and 900 orders. Zero-order reseller: RS024
 ```
 
 ### Step 2: Execute SQL Analytical Queries & Generate Monthly Revenue Feed
 **Terminal Input:**
 ```bash
-python -c '
-import sqlite3, csv
-conn = sqlite3.connect("data/meesho_reseller.db")
-cur = conn.cursor()
-rows = cur.execute("""
-SELECT month, category, ROUND(SUM(quantity * unit_price), 2) AS revenue, COUNT(*) AS n_orders
-FROM orders
-GROUP BY CASE month WHEN "April" THEN 1 WHEN "May" THEN 2 WHEN "June" THEN 3 END, month, category
-""").fetchall()
-with open("part1_sql/output/monthly_category_revenue.csv", "w", newline="") as f:
-    w = csv.writer(f)
-    w.writerow(["month", "category", "revenue", "n_orders"])
-    for r in rows: w.writerow([r[0], r[1], f"{r[2]:.2f}", r[3]])
-conn.close()
-print("Generated part1_sql/output/monthly_category_revenue.csv with 15 rows.")
-'
+python part1_sql/run_queries.py
 ```
 **Terminal Output:**
 ```text
-Generated part1_sql/output/monthly_category_revenue.csv with 15 rows.
+Wrote 15 rows to part1_sql/output/monthly_category_revenue.csv
 ```
 
 ### Step 3: Run Growth Engine Unit Tests
