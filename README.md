@@ -3,6 +3,8 @@
 
 
 
+
+
 # Meesho Reseller Growth & Alert Intelligence Pipeline
 
 A code-first, reproducible intelligence pipeline designed to monitor reseller performance across high-velocity categories, enforce numeric guardrails, generate deterministic and auditable executive narratives, and drive agentic human-in-the-loop escalation workflows for Meesho's category operations.
@@ -23,6 +25,12 @@ $$\text{SQL Business Queries} \longrightarrow \text{Python Guardrails} \longrigh
 
 ---
 
+
+https://github.com/user-attachments/assets/9bf89054-1267-410e-9a5a-25ac954a4e1a
+
+
+
+
 ## How to Present & Explain This Project (Walkthrough Guide)
 
 If an evaluator, interviewer, recruiter, or team lead reviews or downloads this repository, use this structured guide to present the architecture, business rationale, and code design.
@@ -31,6 +39,7 @@ If an evaluator, interviewer, recruiter, or team lead reviews or downloads this 
 > *"This project is an enterprise-grade Reseller Growth & Alert Intelligence Pipeline built for e-commerce platforms like Meesho. It automatically ingests monthly transaction data, enforces strict numeric and schema guardrails, analyzes high-velocity category movements ($> \pm 8\%$), synthesizes executive narratives with strict factual attribution (`[Fact]` vs `[Hypothesis]`), and runs an autonomous agent that drafts prioritized alerts without causing notification fatigue. It operates 100% offline, requires zero API keys, and enforces human-in-the-loop governance for all drafted communications."*
 
 ---
+
 
 ### 2. The 5-Minute Technical Deep Dive (The 5-Stage Story)
 
