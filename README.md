@@ -1,3 +1,8 @@
+<img width="2752" height="1536" alt="Reseller_Growth_Pipeline_Architecture" src="https://github.com/user-attachments/assets/47641413-fb47-48f5-90a4-2e8452c61726" />
+
+
+
+
 # Meesho Reseller Growth & Alert Intelligence Pipeline
 
 A code-first, reproducible intelligence pipeline designed to monitor reseller performance across high-velocity categories, enforce numeric guardrails, generate deterministic and auditable executive narratives, and drive agentic human-in-the-loop escalation workflows for Meesho's category operations.
